@@ -34,6 +34,4 @@ class NDFileHDF(NDPluginBase):
         self.lazy_open = ad_rw(bool, prefix + "LazyOpen")
         self.capture = ad_rw(bool, prefix + "Capture")
         self.flush_now = epics_signal_rw(bool, prefix + "FlushNow")
-        self.array_size0 = ad_r(int, prefix + "ArraySize0")
-        self.array_size1 = ad_r(int, prefix + "ArraySize1")
         super().__init__(prefix, name)
