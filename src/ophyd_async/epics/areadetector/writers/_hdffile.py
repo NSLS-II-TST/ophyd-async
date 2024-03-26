@@ -32,6 +32,7 @@ class _HDFFile:
                     "path": ds.path,
                     "multiplier": ds.multiplier,
                     "timestamps": "/entry/instrument/NDAttributes/NDArrayTimeStamp",
+                    "chunk_size": 1,
                 },
             )
             for ds in datasets
