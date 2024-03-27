@@ -1,38 +1,35 @@
-from pathlib import Path
+from dataclasses import dataclass
 from typing import Iterator, List
 
 from event_model import StreamDatum, StreamResource, compose_stream_resource
 
-from ophyd_async.core import DirectoryInfo
 
-from ._hdfdataset import _HDFDataset
+@dataclass
+class _HDFDataset:
+    device_name: str
+    block: str
+    name: str
+    path: str
+    shape: List[int]
+    multiplier: int
 
 
 class _HDFFile:
-    """
-    :param directory_info: Contains information about how to construct a StreamResource
-    :param full_file_name: Absolute path to the file to be written
-    :param datasets: Datasets to write into the file
-    """
-
     def __init__(
-        self,
-        directory_info: DirectoryInfo,
-        full_file_name: Path,
-        datasets: List[_HDFDataset],
+        self, file_path: str, full_file_name: str, datasets: List[_HDFDataset]
     ) -> None:
         self._last_emitted = 0
         self._bundles = [
             compose_stream_resource(
                 spec="AD_HDF5_SWMR_SLICE",
-                root=str(directory_info.root),
-                data_key=ds.name,
-                resource_path=str(full_file_name.relative_to(directory_info.root)),
+                root=file_path,
+                data_key=f"{ds.name}",
+                resource_path=full_file_name,
                 resource_kwargs={
+                    "name": ds.name,
+                    "block": ds.block,
                     "path": ds.path,
                     "multiplier": ds.multiplier,
-                    "timestamps": "/entry/instrument/NDAttributes/NDArrayTimeStamp",
-                    "chunk_size": 1,
                 },
             )
             for ds in datasets

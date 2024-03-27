@@ -19,6 +19,20 @@ from ophyd_async.core.signal import observe_value
 from ._hdfdataset import _HDFDataset
 from ._hdffile import _HDFFile
 from .nd_file_hdf import FileWriteMode, NDFileHDF
+from .nd_plugin import DataType
+
+AD_DTYPE_TO_NP = {
+    DataType.Int8: "int8",
+    DataType.UInt8: "uint8",
+    DataType.Int16: "int16",
+    DataType.UInt16: "uint16",
+    DataType.Int32: "int32",
+    DataType.UInt32: "uint32",
+    DataType.Int64: "int64",
+    DataType.UInt64: "uint64",
+    DataType.Float32: "float32",
+    DataType.Float64: "float64",
+}
 
 
 class HDFWriter(DetectorWriter):
@@ -43,14 +57,18 @@ class HDFWriter(DetectorWriter):
     async def open(self, multiplier: int = 1) -> Dict[str, Descriptor]:
         self._file = None
         info = self._directory_provider()
+
+        if await self.hdf.array_size0.get_value() == 0:
+            raise RuntimeError("HDF plugin has not been primed!")
+
         await asyncio.gather(
             self.hdf.num_extra_dims.set(0),
             self.hdf.lazy_open.set(True),
             self.hdf.swmr_mode.set(True),
             # See https://github.com/bluesky/ophyd-async/issues/122
             self.hdf.file_path.set(str(info.root / info.resource_dir)),
-            self.hdf.file_name.set(f"{info.prefix}{self.hdf.name}{info.suffix}"),
-            self.hdf.file_template.set("%s/%s.h5"),
+            self.hdf.file_name.set(f"{info.prefix}{info.suffix}"),
+            self.hdf.file_template.set("%s%s_%3.3d.h5"),
             self.hdf.file_write_mode.set(FileWriteMode.stream),
         )
 
@@ -66,6 +84,8 @@ class HDFWriter(DetectorWriter):
         detector_shape = tuple(await self._shape_provider())
         self._multiplier = multiplier
         outer_shape = (multiplier,) if multiplier > 1 else ()
+        ad_dtype = await self.hdf.data_type.get_value()
+
         # Add the main data
         self._datasets = [
             _HDFDataset(name, "/entry/data/data", detector_shape, multiplier)
@@ -86,6 +106,7 @@ class HDFWriter(DetectorWriter):
                 shape=outer_shape + tuple(ds.shape),
                 dtype="array" if ds.shape else "number",
                 external="STREAM:",
+                dtype_str=AD_DTYPE_TO_NP[ad_dtype],
             )
             for ds in self._datasets
         }
@@ -122,7 +143,11 @@ class HDFWriter(DetectorWriter):
 
     async def close(self):
         # Already done a caput callback in _capture_status, so can't do one here
-        await self.hdf.capture.set(0, wait=False)
+        await asyncio.gather(
+            self.hdf.capture.set(0, wait=False),
+            self.hdf.lazy_open.set(False),
+            self.hdf.swmr_mode.set(False),
+        )
         await wait_for_value(self.hdf.capture, 0, DEFAULT_TIMEOUT)
         if self._capture_status:
             # We kicked off an open, so wait for it to return
