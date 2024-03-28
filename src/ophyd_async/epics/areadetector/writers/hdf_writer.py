@@ -76,7 +76,7 @@ class HDFWriter(DetectorWriter):
             await self.hdf.file_path_exists.get_value()
         ), f"File path {self.hdf.file_path.get_value()} for hdf plugin does not exist"
 
-        # Overwrite num_capture to go forever
+        # Set capture to num_images. Default 0, which is forever
         await self.hdf.num_capture.set(0)
         # Wait for it to start, stashing the status that tells us when it finishes
         self._capture_status = await set_and_wait_for_value(self.hdf.capture, True)
