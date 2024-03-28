@@ -22,16 +22,16 @@ from .nd_file_hdf import FileWriteMode, NDFileHDF
 from .nd_plugin import DataType
 
 AD_DTYPE_TO_NP = {
-    DataType.Int8: "int8",
-    DataType.UInt8: "uint8",
-    DataType.Int16: "int16",
-    DataType.UInt16: "uint16",
-    DataType.Int32: "int32",
-    DataType.UInt32: "uint32",
-    DataType.Int64: "int64",
-    DataType.UInt64: "uint64",
-    DataType.Float32: "float32",
-    DataType.Float64: "float64",
+    "Int8": "int8",
+    "UInt8": "uint8",
+    "Int16": "int16",
+    "UInt16": "uint16",
+    "Int32": "int32",
+    "UInt32": "uint32",
+    "Int64": "int64",
+    "UInt64": "uint64",
+    "Float32": "float32",
+    "Float64": "float64",
 }
 
 
@@ -106,7 +106,7 @@ class HDFWriter(DetectorWriter):
                 shape=outer_shape + tuple(ds.shape),
                 dtype="array" if ds.shape else "number",
                 external="STREAM:",
-                dtype_str=AD_DTYPE_TO_NP[ad_dtype],
+                dtype_str=AD_DTYPE_TO_NP[ad_dtype.value],
             )
             for ds in self._datasets
         }
