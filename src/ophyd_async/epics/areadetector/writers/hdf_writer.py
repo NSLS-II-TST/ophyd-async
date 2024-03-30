@@ -68,7 +68,9 @@ class HDFWriter(DetectorWriter):
             # See https://github.com/bluesky/ophyd-async/issues/122
             self.hdf.file_path.set(str(info.root / info.resource_dir)),
             self.hdf.file_name.set(f"{info.prefix}{info.suffix}"),
-            self.hdf.file_template.set("%s%s_%3.3d.h5"),
+            # TODO: make it a parameter.
+            # self.hdf.file_template.set("%s%s_%3.3d.h5"),
+            self.hdf.file_template.set("%s%s.h5"),
             self.hdf.file_write_mode.set(FileWriteMode.stream),
         )
 

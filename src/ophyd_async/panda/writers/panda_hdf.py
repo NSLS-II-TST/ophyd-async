@@ -30,6 +30,7 @@ class _HDFFile:
                     "block": ds.block,
                     "path": ds.path,
                     "multiplier": ds.multiplier,
+                    "chunk_size": 1024,
                 },
             )
             for ds in datasets
